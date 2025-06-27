@@ -6,13 +6,15 @@ interface SettingsModalProps {
   onClose: () => void;
   webhookUrl: string;
   isConnected: boolean;
+  isDevelopment?: boolean;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   isOpen, 
   onClose, 
   webhookUrl, 
-  isConnected 
+  isConnected,
+  isDevelopment = false 
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -45,21 +47,39 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <div className="space-y-6">
-          <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-lg">
-            <div className="flex items-center space-x-2 mb-2">
-              <ExternalLink className="w-5 h-5 text-blue-400" />
-              <span className="text-blue-400 font-medium">Public Webhook Required</span>
+          {/* Only show deployment message if in development */}
+          {isDevelopment && (
+            <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <ExternalLink className="w-5 h-5 text-blue-400" />
+                <span className="text-blue-400 font-medium">Public Webhook Required</span>
+              </div>
+              <p className="text-sm text-slate-300 mb-3">
+                Adobe I/O Events requires a publicly accessible webhook URL. Deploy this dashboard to get a public URL.
+              </p>
+              <button
+                onClick={() => {
+                  window.open('https://railway.app', '_blank');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Deploy to Railway
+              </button>
             </div>
-            <p className="text-sm text-slate-300 mb-3">
-              Adobe I/O Events requires a publicly accessible webhook URL. Deploy this dashboard to get a public URL.
-            </p>
-            <button
-              onClick={() => {/* Deploy action will be handled by the deploy button */}}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Deploy to Get Public URL
-            </button>
-          </div>
+          )}
+
+          {/* Show success message if in production */}
+          {!isDevelopment && (
+            <div className="bg-green-900/20 border border-green-500/30 p-4 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-green-400 font-medium">Production Webhook Ready</span>
+              </div>
+              <p className="text-sm text-slate-300">
+                Your webhook is deployed and publicly accessible. You can use this URL with Adobe I/O Events.
+              </p>
+            </div>
+          )}
 
           <div className={`flex items-center space-x-2 p-3 rounded-lg ${
             isConnected 
@@ -81,7 +101,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Current Webhook Endpoint (Local Development)
+              {isDevelopment ? 'Current Webhook Endpoint (Local Development)' : 'Production Webhook Endpoint'}
             </label>
             <div className="flex items-center space-x-2">
               <input
@@ -102,18 +122,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              This local URL won't work with Adobe I/O Events. Deploy to get a public URL.
-            </p>
+            {isDevelopment ? (
+              <p className="text-xs text-slate-400 mt-1">
+                This local URL won't work with Adobe I/O Events. Deploy to get a public URL.
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1">
+                Use this URL in your Adobe I/O Events webhook configuration.
+              </p>
+            )}
           </div>
 
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
             <h3 className="text-sm font-medium text-slate-300 mb-3">Adobe I/O Events Setup</h3>
             <div className="space-y-3 text-sm text-slate-400">
-              <div>
-                <p className="font-medium text-slate-300 mb-1">1. Deploy Dashboard</p>
-                <p>Click the deploy button above to get a public webhook URL that Adobe I/O Events can reach.</p>
-              </div>
+              {isDevelopment ? (
+                <div>
+                  <p className="font-medium text-slate-300 mb-1">1. Deploy Dashboard</p>
+                  <p>Deploy this dashboard to Railway or another platform to get a public webhook URL that Adobe I/O Events can reach.</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-medium text-slate-300 mb-1">1. Configure Adobe I/O Events</p>
+                  <p>Use the webhook URL above in your Adobe I/O Events configuration. The webhook is ready to receive events.</p>
+                </div>
+              )}
               <div>
                 <p className="font-medium text-slate-300 mb-1">2. Challenge Validation</p>
                 <p>This webhook automatically handles Adobe I/O Events challenge validation. When Adobe sends a GET request with a <code className="bg-slate-800 px-1 rounded">challenge</code> parameter, it will be returned in the response.</p>
