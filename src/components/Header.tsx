@@ -6,10 +6,17 @@ interface HeaderProps {
   isLive: boolean;
   isConnected: boolean;
   webhookUrl: string;
+  isDevelopment?: boolean;
   onToggleLive: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ isLive, isConnected, webhookUrl, onToggleLive }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  isLive, 
+  isConnected, 
+  webhookUrl, 
+  isDevelopment = false,
+  onToggleLive 
+}) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
@@ -82,6 +89,7 @@ const Header: React.FC<HeaderProps> = ({ isLive, isConnected, webhookUrl, onTogg
         onClose={() => setIsSettingsOpen(false)}
         webhookUrl={webhookUrl}
         isConnected={isConnected}
+        isDevelopment={isDevelopment}
       />
     </>
   );
