@@ -54,12 +54,36 @@ const generateInitialErrorLogs = (): ErrorLog[] => {
   return logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 };
 
+// Helper to determine if we're in development or production
+const isDevelopment = () => {
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+};
+
+// Get the appropriate API base URL
+const getApiBaseUrl = () => {
+  if (isDevelopment()) {
+    return 'http://localhost:3001';
+  }
+  // In production, use the same origin as the frontend
+  return window.location.origin;
+};
+
+// Get WebSocket URL
+const getWebSocketUrl = () => {
+  if (isDevelopment()) {
+    return 'ws://localhost:3001';
+  }
+  // In production, use wss for secure connections
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}`;
+};
+
 export const useWebSocketData = () => {
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     hourlyData: generateInitialHourlyData(),
     errorLogs: generateInitialErrorLogs(),
     isLive: true,
-    webhookUrl: 'http://localhost:3001/webhook',
+    webhookUrl: `${window.location.origin}/webhook`,
     isConnected: false,
   });
 
@@ -69,17 +93,30 @@ export const useWebSocketData = () => {
   // Fetch webhook URL from backend
   const fetchWebhookUrl = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/webhook-url');
-      const data = await response.json();
-      setDashboardState(prev => ({
-        ...prev,
-        webhookUrl: data.webhookUrl,
-      }));
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}/api/webhook-url`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardState(prev => ({
+          ...prev,
+          webhookUrl: data.webhookUrl,
+        }));
+      } else {
+        // Fallback to constructing the URL ourselves
+        const webhookUrl = `${window.location.origin}/webhook`;
+        setDashboardState(prev => ({
+          ...prev,
+          webhookUrl: webhookUrl,
+        }));
+      }
     } catch (error) {
       console.error('Failed to fetch webhook URL:', error);
+      // Fallback to constructing the URL ourselves
+      const webhookUrl = `${window.location.origin}/webhook`;
       setDashboardState(prev => ({
         ...prev,
-        webhookUrl: 'http://localhost:3001/webhook',
+        webhookUrl: webhookUrl,
       }));
     }
   }, []);
@@ -91,7 +128,8 @@ export const useWebSocketData = () => {
     }
 
     try {
-      wsRef.current = new WebSocket('ws://localhost:3001');
+      const wsUrl = getWebSocketUrl();
+      wsRef.current = new WebSocket(wsUrl);
       
       wsRef.current.onopen = () => {
         console.log('WebSocket connected');
@@ -238,5 +276,6 @@ export const useWebSocketData = () => {
   return {
     ...dashboardState,
     toggleLiveMode,
+    isDevelopment: isDevelopment(),
   };
 };
