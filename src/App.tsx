@@ -5,7 +5,15 @@ import ErrorViewer from './components/ErrorViewer';
 import { useWebSocketData } from './hooks/useWebSocketData';
 
 function App() {
-  const { hourlyData, errorLogs, isLive, isConnected, webhookUrl, toggleLiveMode } = useWebSocketData();
+  const { 
+    hourlyData, 
+    errorLogs, 
+    isLive, 
+    isConnected, 
+    webhookUrl, 
+    isDevelopment,
+    toggleLiveMode 
+  } = useWebSocketData();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -13,6 +21,7 @@ function App() {
         isLive={isLive}
         isConnected={isConnected}
         webhookUrl={webhookUrl}
+        isDevelopment={isDevelopment}
         onToggleLive={toggleLiveMode}
       />
       
